@@ -1,4 +1,4 @@
-# 🌱 Spring Boot Deep Dive (Part 3)  
+# 🌱 Spring Boot Deep Dive (Part 5)  
 **Security, AOP, Configuration, and Profiles**
 
 This document covers **advanced Spring Boot concepts** — critical for **enterprise applications**, **production systems**, and **senior backend roles**.
