@@ -382,12 +382,299 @@ class UserService {
 
 ---
 
+
+Part 2 
+---
+
+## 1. What is the Dependency Inversion Principle (DIP)?
+
+> **"High-level modules should not depend on low-level modules. Both should depend on abstractions."**  
+> **"Abstractions should not depend on details. Details should depend on abstractions."**
+
+This is the **"D" in SOLID** — and the foundation of **loose coupling**.
+
+---
+
+### 🔹 1.1 Why It Matters
+
+Without DIP:
+```java
+class NotificationService {
+    private EmailService email = new EmailService(); // ❌ High-level depends on low-level
+}
+```
+
+✅ Problems:
+- Tightly coupled
+- Hard to test (can't mock `EmailService`)
+- Hard to extend (no SMS, push, etc.)
+
+---
+
+### 🔹 1.2 With DIP: Depend on Abstractions
+
+```java
+// Abstraction
+interface MessageService {
+    void send(String to, String msg);
+}
+
+// Low-level details
+class EmailService implements MessageService {
+    public void send(String to, String msg) {
+        System.out.println("Email sent to " + to);
+    }
+}
+
+class SMSService implements MessageService {
+    public void send(String to, String msg) {
+        System.out.println("SMS sent to " + to);
+    }
+}
+
+// High-level module
+class NotificationService {
+    private MessageService service; // ✅ Depends on abstraction
+
+    public NotificationService(MessageService service) {
+        this.service = service;
+    }
+
+    public void notify(String user) {
+        service.send(user, "Welcome!");
+    }
+}
+```
+
+✅ Now:
+- `NotificationService` doesn’t care which service is used
+- Easy to **swap** or **extend** (add `PushService`)
+- Easy to **test** (inject mock)
+
+---
+
+### 🔹 1.3 How DIP Enables Dependency Injection (DI)
+
+```java
+// Spring example
+@Service
+class NotificationService {
+    @Autowired
+    private MessageService service; // DI container injects implementation
+}
+```
+
+✅ DI is the **implementation mechanism** for DIP.
+
+---
+
+### 📌 Interview Answer
+
+> _"The Dependency Inversion Principle states that high-level modules should depend on abstractions, not concrete implementations. I apply it by defining interfaces like `MessageService`, so `NotificationService` doesn’t depend on `EmailService`. This makes the system flexible, testable, and extensible. Spring’s DI is a practical implementation of DIP."_  
+
+---
+
+## 2. What is the Factory Pattern? When would you use it?
+
+> The **Factory Pattern** is a **creational design pattern** that **encapsulates object creation logic** — so the client doesn’t have to know how to create objects.
+
+It **decouples** object creation from usage.
+
+---
+
+### 🔹 2.1 Problem: Direct Object Creation
+
+```java
+class PaymentProcessor {
+    public void process(String type) {
+        PaymentGateway gateway;
+        if (type.equals("paypal")) {
+            gateway = new PayPalGateway();
+        } else if (type.equals("stripe")) {
+            gateway = new StripeGateway();
+        } else {
+            throw new IllegalArgumentException("Unknown type");
+        }
+        gateway.charge(100);
+    }
+}
+```
+
+❌ Problems:
+- Logic scattered
+- Hard to extend (add new gateway)
+- Violates Open/Closed Principle
+
+---
+
+### 🔹 2.2 Solution: Factory Pattern
+
+```java
+interface PaymentGateway {
+    void charge(double amount);
+}
+
+class PayPalGateway implements PaymentGateway { /* ... */ }
+class StripeGateway implements PaymentGateway { /* ... */ }
+
+// Factory
+class PaymentGatewayFactory {
+    public PaymentGateway create(String type) {
+        return switch (type.toLowerCase()) {
+            case "paypal" -> new PayPalGateway();
+            case "stripe" -> new StripeGateway();
+            default -> throw new IllegalArgumentException("Unsupported gateway: " + type);
+        };
+    }
+}
+
+// Client
+class PaymentProcessor {
+    private PaymentGatewayFactory factory = new PaymentGatewayFactory();
+
+    public void process(String type) {
+        PaymentGateway gateway = factory.create(type);
+        gateway.charge(100);
+    }
+}
+```
+
+✅ Now:
+- Creation logic is **centralized**
+- Easy to **extend** (add new gateway in factory)
+- Client doesn’t know implementation details
+
+---
+
+### 🔹 2.3 When to Use Factory Pattern
+
+| Use Case | Example |
+|--------|--------|
+| ✅ Object creation is complex | Configuring API clients |
+| ✅ Multiple implementations | Payment, Logging, Messaging |
+| ✅ Want to hide construction logic | Database connections |
+| ✅ Follow Open/Closed Principle | Add new types without changing client |
+
+---
+
+### 📌 Interview Answer
+
+> _"The Factory Pattern encapsulates object creation. I use it when I have multiple implementations of an interface — like `PayPalGateway` and `StripeGateway`. The factory decides which to create based on input. This keeps the client code clean and makes it easy to add new types without changing existing code. It’s a great way to follow the Open/Closed Principle."_  
+
+---
+
+## 3. What is the Strategy Pattern?
+
+> The **Strategy Pattern** is a **behavioral design pattern** that **defines a family of algorithms**, encapsulates each one, and makes them **interchangeable**.
+
+It lets the algorithm **vary independently** from the clients that use it.
+
+---
+
+### 🔹 3.1 Problem: Hardcoded Logic
+
+```java
+class ShoppingCart {
+    double total;
+    String discountType;
+
+    public double calculateTotal() {
+        if ("seasonal".equals(discountType)) {
+            return total * 0.9;
+        } else if ("member".equals(discountType)) {
+            return total * 0.8;
+        } else if ("none".equals(discountType)) {
+            return total;
+        }
+        return total;
+    }
+}
+```
+
+❌ Problems:
+- Logic in client
+- Hard to add new discounts
+- Violates Single Responsibility and Open/Closed
+
+---
+
+### 🔹 3.2 Solution: Strategy Pattern
+
+```java
+// Strategy interface
+interface DiscountStrategy {
+    double apply(double total);
+}
+
+// Concrete strategies
+class SeasonalDiscount implements DiscountStrategy {
+    public double apply(double total) {
+        return total * 0.9;
+    }
+}
+
+class MemberDiscount implements DiscountStrategy {
+    public double apply(double total) {
+        return total * 0.8;
+    }
+}
+
+class NoDiscount implements DiscountStrategy {
+    public double apply(double total) {
+        return total;
+    }
+}
+
+// Context
+class ShoppingCart {
+    private double total;
+    private DiscountStrategy strategy;
+
+    public ShoppingCart(DiscountStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void setStrategy(DiscountStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public double calculateTotal() {
+        return strategy.apply(total);
+    }
+}
+```
+
+✅ Now:
+- Algorithms are **encapsulated**
+- Easy to **add new strategies** (e.g., `HolidayDiscount`)
+- Easy to **switch at runtime**
+
+---
+
+### 🔹 3.3 Real-World Use Cases
+
+| Use Case | Example |
+|--------|--------|
+| ✅ Payment methods | PayPal, Stripe, Apple Pay |
+| ✅ Sorting algorithms | QuickSort, MergeSort |
+| ✅ Compression | ZIP, GZIP, RAR |
+| ✅ Routing algorithms | GPS navigation (fastest, shortest) |
+
+---
+
+### 📌 Interview Answer
+
+> _"The Strategy Pattern defines a family of interchangeable algorithms. I use it for things like discounts, payment methods, or sorting. Each algorithm implements a common interface, and the context (e.g., ShoppingCart) uses it without knowing the details. This makes the system flexible — I can add new strategies without changing the client. It’s perfect for runtime switching and follows Open/Closed and Single Responsibility principles."_  
+
+---
+
 ## ✅ Final Tip
 
-> 🎯 In interviews, **combine principles**:
-> _"I use Dependency Injection to achieve Dependency Inversion, write small interfaces for ISP, and ensure classes have single responsibility."_  
+> 🎯 In interviews, **combine patterns**:
+> _"I use the Strategy Pattern for interchangeable algorithms, the Factory Pattern to create them, and Dependency Injection to inject them — all based on the Dependency Inversion Principle."_  
+
+That shows **deep, integrated understanding** — exactly what senior roles want.
+
+---
 
 
-Just say: _"Let’s do [topic]"_
-
-You're mastering **software design** like a true senior engineer. 💪
