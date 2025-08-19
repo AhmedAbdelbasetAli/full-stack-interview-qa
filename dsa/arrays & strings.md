@@ -246,18 +246,288 @@ public static void main(String[] args) {
 
 ---
 
+# 🧠 Java String Algorithms  part 2 
+
+
+---
+
+## 1. Write code to reverse a string without using built-in functions.
+
+> Reverse a string **without using `StringBuilder.reverse()` or similar**.
+
+### ✅ Approach
+- Convert string to `char[]`
+- Use two pointers: one at start, one at end
+- Swap characters and move toward center
+
+### ✅ Java Code
+```java
+public static String reverseString(String str) {
+    if (str == null || str.isEmpty()) {
+        return str;
+    }
+
+    char[] chars = str.toCharArray();
+    int left = 0;
+    int right = chars.length - 1;
+
+    while (left < right) {
+        // Swap
+        char temp = chars[left];
+        chars[left] = chars[right];
+        chars[right] = temp;
+
+        left++;
+        right--;
+    }
+
+    return new String(chars);
+}
+
+// Example usage
+public static void main(String[] args) {
+    System.out.println(reverseString("hello")); // "olleh"
+    System.out.println(reverseString("Java"));   // "avaJ"
+}
+```
+
+### 📌 Time & Space
+- **Time**: O(n)
+- **Space**: O(n) — for char array
+
+### 💡 Interview Tip
+> _"I use two pointers to swap characters from both ends. This is optimal — O(n) time. I handle edge cases: null, empty, single character. I avoid `StringBuilder.reverse()` as requested."_  
+
+---
+
+## 2. How do you check if two strings are anagrams?
+
+> Two strings are **anagrams** if they contain the **same characters in the same frequency** (ignoring case and spaces).
+
+### ✅ Approach
+- Remove spaces and convert to lowercase
+- Count frequency of each character
+- Compare frequency maps
+
+### ✅ Java Code
+```java
+import java.util.*;
+
+public static boolean areAnagrams(String s1, String s2) {
+    if (s1 == null || s2 == null) return false;
+    
+    // Normalize: remove spaces, lowercase
+    s1 = s1.replaceAll("\\s", "").toLowerCase();
+    s2 = s2.replaceAll("\\s", "").toLowerCase();
+    
+    if (s1.length() != s2.length()) return false;
+
+    Map<Character, Integer> freq = new HashMap<>();
+
+    // Count frequency in s1
+    for (char c : s1.toCharArray()) {
+        freq.put(c, freq.getOrDefault(c, 0) + 1);
+    }
+
+    // Subtract frequency for s2
+    for (char c : s2.toCharArray()) {
+        freq.put(c, freq.getOrDefault(c, 0) - 1);
+        if (freq.get(c) < 0) {
+            return false;
+        }
+    }
+
+    // All counts should be zero
+    return freq.values().stream().allMatch(count -> count == 0);
+}
+
+// Example usage
+public static void main(String[] args) {
+    System.out.println(areAnagrams("listen", "silent")); // true
+    System.out.println(areAnagrams("hello", "bello"));   // false
+}
+```
+
+### 📌 Time & Space
+- **Time**: O(n)
+- **Space**: O(1) — at most 26 letters (if only a-z)
+
+### 💡 Interview Tip
+> _"I normalize strings (lowercase, no spaces), then use a frequency map. I increment for first string, decrement for second. If all counts are zero, they’re anagrams. This handles duplicates and is O(n). I could also sort both strings and compare — but that’s O(n log n)."_  
+
+---
+
+## 3. Find the longest substring without repeating characters.
+
+> Given a string, find the **length of the longest substring with all unique characters**.
+
+### ✅ Approach: Sliding Window with HashSet
+
+- Use two pointers: `left` and `right`
+- Expand `right` and add characters to a `Set`
+- If duplicate found, move `left` and remove characters until no duplicate
+- Track max length
+
+### ✅ Java Code
+```java
+import java.util.*;
+
+public static int longestUniqueSubstring(String s) {
+    if (s == null || s.isEmpty()) return 0;
+
+    Set<Character> seen = new HashSet<>();
+    int left = 0, maxLen = 0;
+
+    for (int right = 0; right < s.length(); right++) {
+        char c = s.charAt(right);
+
+        while (seen.contains(c)) {
+            seen.remove(s.charAt(left));
+            left++;
+        }
+
+        seen.add(c);
+        maxLen = Math.max(maxLen, right - left + 1);
+    }
+
+    return maxLen;
+}
+
+// Example usage
+public static void main(String[] args) {
+    System.out.println(longestUniqueSubstring("abcabcbb")); // 3 ("abc")
+    System.out.println(longestUniqueSubstring("bbbbb"));    // 1 ("b")
+    System.out.println(longestUniqueSubstring("pwwkew"));   // 3 ("wke")
+}
+```
+
+### 📌 Time & Space
+- **Time**: O(n) — each character visited at most twice
+- **Space**: O(min(m,n)) — m = charset size
+
+### 💡 Interview Tip
+> _"I use the sliding window technique with a HashSet. I expand the right pointer and shrink left when a duplicate is found. This ensures all characters in the window are unique. I track the maximum window size. It’s O(n) time and optimal."_  
+
+---
+
+## 4. Implement string compression (e.g., "aaabcc" → "a3bc2").
+
+> Compress consecutive repeated characters into `char + count`.
+
+> If compressed string is not shorter, return original.
+
+### ✅ Approach
+- Traverse string, count consecutive characters
+- Append char and count to result
+- Only return compressed if shorter
+
+### ✅ Java Code
+```java
+public static String compressString(String s) {
+    if (s == null || s.length() <= 1) return s;
+
+    StringBuilder compressed = new StringBuilder();
+    char current = s.charAt(0);
+    int count = 1;
+
+    for (int i = 1; i < s.length(); i++) {
+        if (s.charAt(i) == current) {
+            count++;
+        } else {
+            compressed.append(current);
+            if (count > 1) {
+                compressed.append(count);
+            }
+            current = s.charAt(i);
+            count = 1;
+        }
+    }
+
+    // Append last group
+    compressed.append(current);
+    if (count > 1) {
+        compressed.append(count);
+    }
+
+    // Return compressed only if shorter
+    return compressed.length() < s.length() ? compressed.toString() : s;
+}
+
+// Example usage
+public static void main(String[] args) {
+    System.out.println(compressString("aaabcc"));     // "a3bc2"
+    System.out.println(compressString("abc"));       // "abc" (no compression)
+    System.out.println(compressString("aabbcc"));    // "a2b2c2" → same length → "aabbcc"
+}
+```
+
+### 📌 Time & Space
+- **Time**: O(n)
+- **Space**: O(n) — for StringBuilder
+
+### 💡 Interview Tip
+> _"I traverse the string, count consecutive characters, and build the compressed version. I only return it if it’s shorter than the original — otherwise, I return the original to avoid bloating. I use StringBuilder for efficiency."_  
+
+---
+
+## 5. How do you find the first non-repeating character in a string?
+
+> Return the **first character that appears only once** in the string.
+
+Return its **index**, or `-1` if none.
+
+### ✅ Approach
+- First pass: count frequency of each character
+- Second pass: find first character with count = 1
+
+### ✅ Java Code
+```java
+import java.util.*;
+
+public static int firstNonRepeatingChar(String s) {
+    if (s == null || s.isEmpty()) return -1;
+
+    Map<Character, Integer> freq = new HashMap<>();
+
+    // Count frequency
+    for (char c : s.toCharArray()) {
+        freq.put(c, freq.getOrDefault(c, 0) + 1);
+    }
+
+    // Find first char with count 1
+    for (int i = 0; i < s.length(); i++) {
+        if (freq.get(s.charAt(i)) == 1) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+// Example usage
+public static void main(String[] args) {
+    System.out.println(firstNonRepeatingChar("abccba"));  // -1
+    System.out.println(firstNonRepeatingChar("abca"));    // 1 ('b')
+    System.out.println(firstNonRepeatingChar("leetcode")); // 0 ('l')
+}
+```
+
+### 📌 Time & Space
+- **Time**: O(n)
+- **Space**: O(1) — at most 26 letters
+
+### 💡 Interview Tip
+> _"I use a two-pass approach: first count frequencies, then scan for the first character with count 1. It’s O(n) time and optimal. I could use LinkedHashMap to track order, but this is simpler and faster."_  
+
+---
+
 ## ✅ Final Tips for Coding Interviews
 
-1. **Clarify the problem** — ask about duplicates, empty arrays, constraints
+1. **Clarify the problem** — case sensitivity? spaces? empty string?
 2. **Talk through your approach** — don’t jump into coding
 3. **Write clean, readable code** — use meaningful variable names
-4. **Test with examples** — edge cases: empty, single element, duplicates
+4. **Test with examples** — edge cases: empty, single char, all same
 5. **State time & space complexity**
 
 ---
 
-
-
-Just say: _"Let’s do [topic]"_
-
-You're mastering **coding interview patterns** like a pro. 💪
