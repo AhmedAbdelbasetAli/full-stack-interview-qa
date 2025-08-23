@@ -291,12 +291,4 @@ That shows **deep, integrated system design knowledge**.
 
 ---
 
-👉 Want more?  
-Let’s do:  
-- **Design a Scalable API with Rate Limiting**  
-- **Event-Driven Architecture Deep Dive**  
-- **Mock Interview: System Design**
 
-Just say: _"Let’s do [topic]"_
-
-You're mastering **system design** like a pro. 💪
