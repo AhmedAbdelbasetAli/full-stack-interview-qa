@@ -1,5 +1,3 @@
-
-
 ---
 
 # 📊 SORTING PROBLEMS — MASTER LIST
